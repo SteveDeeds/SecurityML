@@ -150,8 +150,8 @@ def main():
         extractFrames(filename)
         background = makeBackground()
         maskFrames(background)
-        #clearTemp()
-        #videoToArchive(filename)
+        clearTemp()
+        videoToArchive(filename)
 
 
 
