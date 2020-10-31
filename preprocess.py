@@ -52,14 +52,16 @@ def maskFrames(background):
         mask = (imageDilate(abs(image - background)) > 45).astype(np.uint8)
         x,y = centroid(mask)
         if(x<0):continue
-        mask = imageDilate(imageErode(toGrey(mask),size=10), size=20)
+        mask = imageDilate(imageErode(toGrey(mask),size=20), size=20)
         image_masked = image * mask
         image_cropped = image[y-149:y+150, x-149:x+150]
         mask_cropped = image_masked[y-149:y+150, x-149:x+150]
         filename_no_ext = filename.split('.')[0]
         newFileName = filename_no_ext.replace("temp","frames") + ".png"
+        if os.path.isfile(newFileName) : os.remove(newFilename)
         cv2.imwrite(newFileName, image_cropped)
         newFileName = filename_no_ext.replace("temp","frames") + "_mask.png"
+        if os.path.isfile(newFileName) : os.remove(newFilename)
         cv2.imwrite(newFileName, mask_cropped)
         #newFileName = filename_no_ext.replace("temp","frames") + "_image.png"
         #cv2.imwrite(newFileName, image)
@@ -71,12 +73,31 @@ def centroid(mask):
     denominator=0
     height,width,depth = mask.shape
     mask=imageErode(mask,20)
-    for y,row in enumerate(mask): #1920x1080 takes about a minute
-       for x,pixel in enumerate(row):
-           if pixel.any()>0:
-               sumx = sumx + x
-               sumy = sumy + y
-               denominator = denominator + 1
+
+    mask2d=np.amax(mask, 2)
+    histx = cv2.reduce(mask2d, 0, cv2.REDUCE_SUM, dtype =cv2.CV_32S)
+    histx = histx.flatten()
+    histxi = []
+    for i in range(histx.size):
+        histxi.append([histx[i],i]) 
+    histxi.sort(reverse=True)
+    x = histxi[0][1]
+
+    histy = cv2.reduce(mask2d, 1, cv2.REDUCE_SUM, dtype=cv2.CV_32S)
+    histy = histy.flatten()
+    histyi = []
+    for i in range(histy.size):
+        histyi.append([histy[i],i]) 
+    histyi.sort(reverse=True)
+    y = histyi[0][1]
+
+
+    # for y,row in enumerate(mask): #1920x1080 takes about a minute
+    #    for x,pixel in enumerate(row):
+    #        if pixel.any()>0:
+    #            sumx = sumx + x
+    #            sumy = sumy + y
+    #            denominator = denominator + 1
     # for x in range(width):  # 1920x1080 takes about a minute
     #     for y in range(height):
     #         if(mask[y,x].any()>0):
@@ -100,16 +121,16 @@ def centroid(mask):
     #            sumy = sumy + y
     #            denominator = denominator + 1
 
-    if(denominator>0):
-        x = sumx / denominator
-        y = sumy / denominator
-        if x<150:x=150
-        if y<150:y=150
-        if x>(width-150):x=width-150
-        if y>(height-150):y=height-150
-    else:
-        x=-1
-        y=-1
+    # if(denominator>0):
+    #     x = sumx / denominator
+    #     y = sumy / denominator
+    if x<150:x=150
+    if y<150:y=150
+    if x>(width-150):x=width-150
+    if y>(height-150):y=height-150
+    # else:
+    #     x=-1
+    #     y=-1
     return int(x),int(y)
     
                 
@@ -135,7 +156,10 @@ def clearTemp():
         os.remove(f)
 def videoToArchive(filename):
     justName=filename.split('\\')[-1]
-    os.rename(filename, os.path.join(archivePath, justName))
+    if (os.path.isfile(filename)): 
+        os.remove(filename)
+    else:
+        os.rename(filename, os.path.join(archivePath, justName))
 
 
 def main():
