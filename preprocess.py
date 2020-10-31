@@ -34,7 +34,8 @@ def extractFrames(filename):
     dest = os.path.join(srcPath,'temp',filename_no_ext + '-%04d.jpg')
     #cmd = "ffmpeg -i " + src + ' -vf "scale=640:360, fps=fps=1" ' +  dest
     ##cmd = "ffmpeg -i " + src + ' -vf "select=not(mod(n\,100))" ' +  dest
-    cmd = ["ffmpeg", "-i", src, "-vf", "scale=640:360", "-r", "1", dest]
+    #cmd = ["ffmpeg", "-i", src, "-vf", "scale=640:360", "-r", "1", dest]
+    cmd = ["ffmpeg", "-i", src, "-r", "1", dest]
     call(cmd)
 
 def makeBackground():
@@ -53,50 +54,50 @@ def maskFrames(background):
         #mask = (imageDilate(abs(image - background)) > 45).astype(np.uint8)
         #x,y = centroid(mask)
         #if(x<0):continue
-        #mask = imageDilate(imageErode(toGrey(mask),size=20), size=20)
+        
         #image_masked = image * mask
-        delta = (np.amax(abs(image - background), axis=2))
+        delta = abs(image - background)
         x,y = centroid(delta)
         if(x<0):
           continue
         image_cropped = image[y-149:y+150, x-149:x+150]
-        mask_cropped = image_masked[y-149:y+150, x-149:x+150]
+        #mask_cropped = image_masked[y-149:y+150, x-149:x+150]
         filename_no_ext = filename.split('.')[0]
         newFileName = filename_no_ext.replace("temp","frames") + ".png"
         if os.path.isfile(newFileName) : os.remove(newFilename)
         cv2.imwrite(newFileName, image_cropped)
-        newFileName = filename_no_ext.replace("temp","frames") + "_mask.png"
-        if os.path.isfile(newFileName) : os.remove(newFilename)
-        cv2.imwrite(newFileName, mask_cropped)
+        #newFileName = filename_no_ext.replace("temp","frames") + "_mask.png"
+        #if os.path.isfile(newFileName) : os.remove(newFilename)
+        #cv2.imwrite(newFileName, mask_cropped)
         #newFileName = filename_no_ext.replace("temp","frames") + "_image.png"
         #cv2.imwrite(newFileName, image)
         print("saved "+filename_no_ext)
 
 def centroid(delta):
-    sumx=0
-    sumy=0
-    denominator=0
-    #height,width,depth = mask.shape
-    #mask=imageErode(mask,20)
 
-    #mask2d=np.amax(mask, 2)
-    #histx = cv2.reduce(mask2d, 0, cv2.REDUCE_SUM, dtype =cv2.CV_32S)
-    #histx = histx.flatten()
-    #histxi = []
-    #for i in range(histx.size):
-    #    histxi.append([histx[i],i]) 
-    #histxi.sort(reverse=True)
-    #x = histxi[0][1]
+    height,width,depth = delta.shape
 
-    #histy = cv2.reduce(mask2d, 1, cv2.REDUCE_SUM, dtype=cv2.CV_32S)
-    #histy = histy.flatten()
-    #histyi = []
-    #for i in range(histy.size):
-    #    histyi.append([histy[i],i]) 
-    #histyi.sort(reverse=True)
-    #y = histyi[0][1]
+    delta=imageErode(delta,20).astype(np.uint8)
+    delta=cv2.blur(delta, (3,3))
 
-    # for y,row in enumerate(mask): #1920x1080 takes about a minute
+    mask2d=np.amax(delta, 2)
+    histx = cv2.reduce(mask2d, 0, cv2.REDUCE_SUM, dtype =cv2.CV_32S)
+    histx = histx.flatten()
+    histxi = []
+    for i in range(histx.size):
+        histxi.append([histx[i],i]) 
+    histxi.sort(reverse=True)
+    x = histxi[0][1]
+
+    histy = cv2.reduce(mask2d, 1, cv2.REDUCE_SUM, dtype=cv2.CV_32S)
+    histy = histy.flatten()
+    histyi = []
+    for i in range(histy.size):
+        histyi.append([histy[i],i]) 
+    histyi.sort(reverse=True)
+    y = histyi[0][1]
+
+    # for y,row in enumerate(delta): #1920x1080 takes about a minute
     #    for x,pixel in enumerate(row):
     #        if pixel.any()>0:
     #            sumx = sumx + x
@@ -104,20 +105,20 @@ def centroid(delta):
     #            denominator = denominator + 1
     # for x in range(width):  # 1920x1080 takes about a minute
     #     for y in range(height):
-    #         if(mask[y,x].any()>0):
+    #         if(delta[y,x].any()>0):
     #            sumx = sumx + x
     #            sumy = sumy + y
     #            denominator = denominator + 1
-    # mask1d=mask.reshape(-1,3) # 1920x1080 takes about a minute
-    # for i,p in enumerate(mask1d):
+    # delta1d=delta.reshape(-1,3) # 1920x1080 takes about a minute
+    # for i,p in enumerate(delta1d):
     #        if p.any()>0:
     #            x=i%width
     #            y=math.floor(i/width)
     #            sumx = sumx + x
     #            sumy = sumy + y
     #            denominator = denominator + 1    
-    # mask1d=mask.reshape(-1) # 1920x1080 took 3 minutes
-    # for i,p in enumerate(mask1d):
+    # delta1d=delta.reshape(-1) # 1920x1080 took 3 minutes
+    # for i,p in enumerate(delta1d):
     #        if p.any()>0:
     #            x=i%(width*3)
     #            y=math.floor(i/(width*3))
@@ -135,23 +136,23 @@ def centroid(delta):
     # else:
     #     x=-1
     #     y=-1
-    height, width = delta.shape
-    for x in range(0, width):
-       for y in range(0, height):
-         d = delta[y][x]
-         sumx += x * d
-         sumy += y * d
-         denominator += d
+    #height, width = delta.shape
+    #for x in range(0, width):
+    #   for y in range(0, height):
+    #     d = delta[y][x]
+    #     sumx += x * d
+    #     sumy += y * d
+    #     denominator += d
 
-    if(denominator>0):
-        x = sumx / denominator
-        y = sumy / denominator
+    #if(denominator>0):
+    #    x = sumx / denominator
+    #    y = sumy / denominator
         # this pair of "max" and "min" implements a "clamp".
-        x = max(150, min(width-150, x))
-        y = max(150, min(height-150, y))
-    else:
-        x=-1
-        y=-1
+    x = max(150, min(width-150, x))
+    y = max(150, min(height-150, y))
+    #else:
+    #    x=-1
+    #    y=-1
     return int(x),int(y)
 
 def imageDilate(img, size=3):
@@ -178,8 +179,6 @@ def videoToArchive(filename):
         os.remove(filename)
     else:
         os.rename(filename, os.path.join(archivePath, justName))
-    justName=os.path.split(filename)[-1]
-    os.rename(filename, os.path.join(archivePath, justName))
 
 def main():
 

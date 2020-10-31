@@ -80,7 +80,7 @@ def get_model(weights='imagenet'):
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu')(x)
     # and a logistic layer
-    #predictions = Dense(len(data.classes), activation='softmax')(x) #???
+    #predictions = Dense(len(data.classes), activation='softmax')(x)
 
     predictions = Dense(len(classes), activation='softmax')(x)
 
