@@ -55,6 +55,7 @@ def maskFrames(background):
         if(x<0):
           continue
         image_cropped = image[y-149:y+150, x-149:x+150]
+        mask_cropped = image_masked[y-149:y+150, x-149:x+150]
         filename_no_ext = filename.split('.')[0]
         newFileName = filename_no_ext.replace("temp","frames") + ".jpg"
         cv2.imwrite(newFileName, image_cropped)
@@ -123,8 +124,8 @@ def main():
         extractFrames(filename)
         background = makeBackground()
         maskFrames(background)
-        #clearTemp()
-        #videoToArchive(filename)
+        clearTemp()
+        videoToArchive(filename)
 
 if __name__ == '__main__':
     main()
