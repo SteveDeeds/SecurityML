@@ -55,11 +55,12 @@ def maskFrames(background):
         mask = imageDilate(imageErode(toGrey(mask),size=10), size=20)
         image_masked = image * mask
         image_cropped = image[y-149:y+150, x-149:x+150]
+        mask_cropped = image_masked[y-149:y+150, x-149:x+150]
         filename_no_ext = filename.split('.')[0]
         newFileName = filename_no_ext.replace("temp","frames") + ".png"
         cv2.imwrite(newFileName, image_cropped)
         newFileName = filename_no_ext.replace("temp","frames") + "_mask.png"
-        cv2.imwrite(newFileName, image_masked)
+        cv2.imwrite(newFileName, mask_cropped)
         #newFileName = filename_no_ext.replace("temp","frames") + "_image.png"
         #cv2.imwrite(newFileName, image)
         print("saved "+filename_no_ext)
@@ -75,7 +76,7 @@ def centroid(mask):
            if pixel.any()>0:
                sumx = sumx + x
                sumy = sumy + y
-               denominator + denominator + 1
+               denominator = denominator + 1
     # for x in range(width):  # 1920x1080 takes about a minute
     #     for y in range(height):
     #         if(mask[y,x].any()>0):
@@ -89,7 +90,7 @@ def centroid(mask):
     #            y=math.floor(i/width)
     #            sumx = sumx + x
     #            sumy = sumy + y
-    #            denominator + denominator + 1    
+    #            denominator = denominator + 1    
     # mask1d=mask.reshape(-1) # 1920x1080 took 3 minutes
     # for i,p in enumerate(mask1d):
     #        if p.any()>0:
@@ -97,7 +98,7 @@ def centroid(mask):
     #            y=math.floor(i/(width*3))
     #            sumx = sumx + x
     #            sumy = sumy + y
-    #            denominator + denominator + 1
+    #            denominator = denominator + 1
 
     if(denominator>0):
         x = sumx / denominator
