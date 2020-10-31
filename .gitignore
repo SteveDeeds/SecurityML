@@ -1,8 +1,6 @@
-# images          #
-###################
-*.png
-*.jpg
-*.mp4
+# All data artifacts #
+######################
+data/**
 
 # log files #
 #############
@@ -17,5 +15,4 @@
 # cache #
 #########
 *.pyc
-data/checkpoints/inception.001-0.12.hdf5
-data/checkpoints/inception.001-0.20.hdf5
+
