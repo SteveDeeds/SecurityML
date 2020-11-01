@@ -57,19 +57,23 @@ def maskFrames(background):
         
         #image_masked = image * mask
         delta = abs(image - background)
+        #delta = (delta > 32).astype(np.uint8)
+        delta=imageErode(delta,20).astype(np.uint8)
+        delta=cv2.blur(delta, (3,3))
         x,y = centroid(delta)
+        print("x=%d y=%d" % (x, y))
         if(x<0):
           continue
         image_cropped = image[y-149:y+150, x-149:x+150]
         #mask_cropped = image_masked[y-149:y+150, x-149:x+150]
         filename_no_ext = filename.split('.')[0]
-        newFileName = filename_no_ext.replace("temp","frames") + ".png"
-        if os.path.isfile(newFileName) : os.remove(newFilename)
+        newFileName = filename_no_ext.replace("temp","frames") + ".jpg"
+        #if os.path.isfile(newFileName) : os.remove(newFilename)
         cv2.imwrite(newFileName, image_cropped)
         #newFileName = filename_no_ext.replace("temp","frames") + "_mask.png"
         #if os.path.isfile(newFileName) : os.remove(newFilename)
-        #cv2.imwrite(newFileName, mask_cropped)
-        #newFileName = filename_no_ext.replace("temp","frames") + "_image.png"
+        #cv2.imwrite(newFileName, delta)
+        #newFileName = filename_no_ext.replace("temp","frames") + "_image.jpg"
         #cv2.imwrite(newFileName, image)
         print("saved "+filename_no_ext)
 
@@ -77,8 +81,6 @@ def centroid(delta):
 
     height,width,depth = delta.shape
 
-    delta=imageErode(delta,20).astype(np.uint8)
-    delta=cv2.blur(delta, (3,3))
 
     mask2d=np.amax(delta, 2)
     histx = cv2.reduce(mask2d, 0, cv2.REDUCE_SUM, dtype =cv2.CV_32S)
