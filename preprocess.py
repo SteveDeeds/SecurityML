@@ -7,12 +7,18 @@ from subprocess import call
 import cv2  # pip3 install opencv-python
 from PIL import Image   # pip3 install Pillow
 import random
+import string
 import math
+from PIL import ImageTk, Image
+import tkinter as tk
+import functools as ft
 
 global srcPath 
 srcPath = os.path.join('data','unsorted')
 global archivePath
 archivePath = os.path.join('data','archive')
+global interactive
+interactive = True
 
 def preprocess():
     files = glob.glob('*.mp4')
@@ -20,21 +26,12 @@ def preprocess():
     for filename in files:
         # make a jpg of each frame in a temp folder
         extractFrames(filename)
-        # open up to 100 images for one video and calculate the background
-
-            # remove the background from each frame
-        #delete the massive number of frames
-        #for imagefile in imagefiles
-        #    os.remove(imagefile)
 
 def extractFrames(filename):
     src = os.path.join(filename)
     filename_no_ext = filename.split('.')[0]
     filename_no_ext = os.path.split(filename_no_ext)[-1]
     dest = os.path.join(srcPath,'temp',filename_no_ext + '-%04d.jpg')
-    #cmd = "ffmpeg -i " + src + ' -vf "scale=640:360, fps=fps=1" ' +  dest
-    ##cmd = "ffmpeg -i " + src + ' -vf "select=not(mod(n\,100))" ' +  dest
-    #cmd = ["ffmpeg", "-i", src, "-vf", "scale=640:360", "-r", "1", dest]
     cmd = ["ffmpeg", "-i", src, "-r", "1", dest]
     call(cmd)
 
@@ -47,35 +44,67 @@ def makeBackground():
     cv2.imwrite("background.png", background)
     return background
 
+def showGUI(image,delta,filename):
+    window = tk.Tk() 
+    #window.geometry("960x960")  
+    originalwidth=image.shape[1]
+    originalheight=image.shape[0]
+    scaleFactor=960/originalwidth
+    newWidth=int(scaleFactor*originalwidth)
+    newHeight=int(scaleFactor*originalheight)
+    imageScaled = cv2.resize(image, dsize=(newWidth,newHeight))
+    TkImg = Image.fromarray(imageScaled)
+    TkImg = ImageTk.PhotoImage(TkImg)
+
+    panel = tk.Label(window, image = TkImg)
+    panel.grid(row=1,column=0,columnspan=10)
+    window.bind("<Button 1>", lambda e: onClick(e,image,filename,scaleFactor))
+
+    window.mainloop()
+
+def onClick(e,image,filename,scaleFactor):
+    x=int(e.x/scaleFactor)
+    y=int(e.y/scaleFactor)
+    CropAndSave(x,y,image,filename)
+    
+
 def maskFrames(background):
     files = glob.glob(os.path.join(srcPath,'temp','*.jpg'))
     for filename in files:
         image = cv2.imread(filename)
-        #mask = (imageDilate(abs(image - background)) > 45).astype(np.uint8)
-        #x,y = centroid(mask)
-        #if(x<0):continue
-        
-        #image_masked = image * mask
         delta = abs(image - background)
-        #delta = (delta > 32).astype(np.uint8)
         delta=imageErode(delta,20).astype(np.uint8)
-        delta=cv2.blur(delta, (3,3))
-        x,y = centroid(delta)
-        print("x=%d y=%d" % (x, y))
-        if(x<0):
-          continue
-        image_cropped = image[y-149:y+150, x-149:x+150]
-        #mask_cropped = image_masked[y-149:y+150, x-149:x+150]
-        filename_no_ext = filename.split('.')[0]
-        newFileName = filename_no_ext.replace("temp","frames") + ".jpg"
-        #if os.path.isfile(newFileName) : os.remove(newFilename)
-        cv2.imwrite(newFileName, image_cropped)
-        #newFileName = filename_no_ext.replace("temp","frames") + "_mask.png"
-        #if os.path.isfile(newFileName) : os.remove(newFilename)
-        #cv2.imwrite(newFileName, delta)
-        #newFileName = filename_no_ext.replace("temp","frames") + "_image.jpg"
-        #cv2.imwrite(newFileName, image)
-        print("saved "+filename_no_ext)
+        if np.amax(delta)<32 : continue
+        if(interactive):
+            showGUI(image,delta,filename)
+        else:
+            delta=cv2.blur(delta, (3,3))
+            x,y = centroid(delta)
+            print("x=%d y=%d" % (x, y))
+            CropAndSave(x,y,image,filename)
+
+
+def CropAndSave(x,y,image,filename):
+    width = image.shape[1]
+    height = image.shape[0]
+    x = max(150, min(width-150, x))
+    y = max(150, min(height-150, y))
+    image_cropped = image[y-149:y+150, x-149:x+150]
+    filename_no_ext = filename.split('.')[0]
+    newFileName = filename_no_ext.replace("temp","frames") + get_random_string(4) + ".jpg"
+    cv2.imwrite(newFileName, image_cropped)
+    #sometimes a head is chopped off, so crop above the target as well.
+    y=y-150
+    y = max(150, min(height-150, y))
+    image_cropped = image[y-149:y+150, x-149:x+150]
+    print("saved "+filename_no_ext)
+    newFileName = filename_no_ext.replace("temp","frames") + get_random_string(4) + ".jpg"
+    cv2.imwrite(newFileName, image_cropped)
+
+def get_random_string(length):
+    letters = string.ascii_letters + string.digits
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
 
 def centroid(delta):
 
@@ -98,63 +127,6 @@ def centroid(delta):
         histyi.append([histy[i],i]) 
     histyi.sort(reverse=True)
     y = histyi[0][1]
-
-    # for y,row in enumerate(delta): #1920x1080 takes about a minute
-    #    for x,pixel in enumerate(row):
-    #        if pixel.any()>0:
-    #            sumx = sumx + x
-    #            sumy = sumy + y
-    #            denominator = denominator + 1
-    # for x in range(width):  # 1920x1080 takes about a minute
-    #     for y in range(height):
-    #         if(delta[y,x].any()>0):
-    #            sumx = sumx + x
-    #            sumy = sumy + y
-    #            denominator = denominator + 1
-    # delta1d=delta.reshape(-1,3) # 1920x1080 takes about a minute
-    # for i,p in enumerate(delta1d):
-    #        if p.any()>0:
-    #            x=i%width
-    #            y=math.floor(i/width)
-    #            sumx = sumx + x
-    #            sumy = sumy + y
-    #            denominator = denominator + 1    
-    # delta1d=delta.reshape(-1) # 1920x1080 took 3 minutes
-    # for i,p in enumerate(delta1d):
-    #        if p.any()>0:
-    #            x=i%(width*3)
-    #            y=math.floor(i/(width*3))
-    #            sumx = sumx + x
-    #            sumy = sumy + y
-    #            denominator = denominator + 1
-
-    # if(denominator>0):
-    #     x = sumx / denominator
-    #     y = sumy / denominator
-    #if x<150:x=150
-    #if y<150:y=150
-    #if x>(width-150):x=width-150
-    #if y>(height-150):y=height-150
-    # else:
-    #     x=-1
-    #     y=-1
-    #height, width = delta.shape
-    #for x in range(0, width):
-    #   for y in range(0, height):
-    #     d = delta[y][x]
-    #     sumx += x * d
-    #     sumy += y * d
-    #     denominator += d
-
-    #if(denominator>0):
-    #    x = sumx / denominator
-    #    y = sumy / denominator
-        # this pair of "max" and "min" implements a "clamp".
-    x = max(150, min(width-150, x))
-    y = max(150, min(height-150, y))
-    #else:
-    #    x=-1
-    #    y=-1
     return int(x),int(y)
 
 def imageDilate(img, size=3):
@@ -177,10 +149,9 @@ def clearTemp():
         os.remove(f)
 def videoToArchive(filename):
     justName=filename.split('\\')[-1]
-    if (os.path.isfile(filename)): 
-        os.remove(filename)
-    else:
-        os.rename(filename, os.path.join(archivePath, justName))
+    destName = os.path.join(archivePath, justName)
+    if (not os.path.isfile(destName)): 
+        os.rename(filename, destName)
 
 def main():
 
@@ -191,7 +162,6 @@ def main():
     files = glob.glob(os.path.join(srcPath,'*.mp4'))
     random.shuffle(files)
     for filename in files:   
-    #filename = files[0]      
         extractFrames(filename)
         background = makeBackground()
         maskFrames(background)
