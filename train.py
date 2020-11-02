@@ -7,11 +7,11 @@ https://keras.io/preprocessing/image/
 and
 https://keras.io/applications/
 """
-from keras.applications.inception_v3 import InceptionV3
+from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
+from keras.layers import Dense, GlobalAveragePooling2D, Input
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 #from data import DataSet
 import os.path
@@ -57,14 +57,16 @@ def get_generators():
     train_generator = train_datagen.flow_from_directory(
         trainPath,
         target_size=(299, 299),
-        batch_size=32,
+        #batch_size=32,
+        batch_size=3,
         classes=classes,
         class_mode='categorical')
 
     validation_generator = test_datagen.flow_from_directory(
         testPath,
         target_size=(299, 299),
-        batch_size=32,
+        #batch_size=32,
+        batch_size=3,
         classes=classes,
         class_mode='categorical')
 
@@ -72,10 +74,13 @@ def get_generators():
 
 def get_model(weights='imagenet'):
     # create the base pre-trained model
+    i = Input([None, None, 3])
+    x = preprocess_input(i)
     base_model = InceptionV3(weights=weights, include_top=False)
-
+    x = base_model(x)
     # add a global spatial average pooling layer
     x = base_model.output
+    
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu')(x)
@@ -120,20 +125,20 @@ def freeze_all_but_mid_and_top(model):
 
 def train_model(model, nb_epoch, generators, callbacks=[]):
     train_generator, validation_generator = generators
-    model.fit_generator(
-        train_generator,
-        steps_per_epoch=100,
+    # model.fit_generator(
+    #     train_generator,
+    #     steps_per_epoch=100,
+    #     validation_data=validation_generator,
+    #     validation_steps=10,
+    #     epochs=nb_epoch,
+    #     callbacks=callbacks)
+    model.fit(
+        x=train_generator,
+        steps_per_epoch=10,
         validation_data=validation_generator,
         validation_steps=10,
         epochs=nb_epoch,
         callbacks=callbacks)
-    #model.fit(
-    #    x=train_generator,
-    #    steps_per_epoch=100,
-    #    validation_data=validation_generator,
-    #    validation_steps=10,
-    #    epochs=nb_epoch,
-    #    callbacks=callbacks)
     return model
 
 def main(weights_file):

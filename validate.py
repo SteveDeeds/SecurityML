@@ -6,12 +6,13 @@ import operator
 import random
 import glob
 import os.path
-from data import DataSet
+#from data import DataSet
 from processor import process_image
 from keras.models import load_model
 
 global srcPath
-srcPath = os.path.join('data', 'unsorted')
+#srcPath = os.path.join('data', 'unsorted')
+srcPath = os.path.join('data','unsorted')
 global dstPath
 dstPath = os.path.join('data', 'machine')
 os.makedirs(dstPath,exist_ok=True)
@@ -23,10 +24,10 @@ for c in classes:
 def main(nb_images=5):
     """Spot-check `nb_images` images."""
     #data = DataSet()
-    model = load_model('data/checkpoints/inception.001-0.20.hdf5')
+    model = load_model('data/checkpoints/inception.006-0.03.hdf5')
 
     # Get all our test images.
-    images = glob.glob(os.path.join(srcPath, '**', '*.png'))
+    images = glob.glob(os.path.join(srcPath, '**', '*.jpg'))
 
     for image in images:
         print('-'*80)
