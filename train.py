@@ -58,7 +58,7 @@ def get_generators():
         trainPath,
         target_size=(299, 299),
         #batch_size=32,
-        batch_size=3,
+        batch_size=8,
         classes=classes,
         class_mode='categorical')
 
@@ -66,16 +66,17 @@ def get_generators():
         testPath,
         target_size=(299, 299),
         #batch_size=32,
-        batch_size=3,
+        batch_size=8,
         classes=classes,
         class_mode='categorical')
 
     return train_generator, validation_generator
 
 def get_model(weights='imagenet'):
-    # create the base pre-trained model
+    # add an input layer
     i = Input([None, None, 3])
     x = preprocess_input(i)
+    # create the base pre-trained model
     base_model = InceptionV3(weights=weights, include_top=False)
     x = base_model(x)
     # add a global spatial average pooling layer
@@ -134,7 +135,7 @@ def train_model(model, nb_epoch, generators, callbacks=[]):
     #     callbacks=callbacks)
     model.fit(
         x=train_generator,
-        steps_per_epoch=10,
+        steps_per_epoch=20,
         validation_data=validation_generator,
         validation_steps=10,
         epochs=nb_epoch,
