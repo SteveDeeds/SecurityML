@@ -11,7 +11,7 @@ from processor import process_image
 from keras.models import load_model
 
 global srcPath
-#srcPath = os.path.join('data', 'unsorted')
+#srcPath = os.path.join('train', 'test')
 srcPath = os.path.join('data','unsorted')
 global dstPath
 dstPath = os.path.join('data', 'machine')
@@ -24,7 +24,7 @@ for c in classes:
 def main(nb_images=5):
     """Spot-check `nb_images` images."""
     #data = DataSet()
-    model = load_model('data/checkpoints/inception.006-0.03.hdf5')
+    model = load_model('data/checkpoints/inception.008-0.09.hdf5')
 
     # Get all our test images.
     images = glob.glob(os.path.join(srcPath, '**', '*.jpg'))
@@ -58,7 +58,10 @@ def main(nb_images=5):
             i += 1
         filename = image.split('\\')[-1]
         if(sorted_lps[0][1]>0.9):
-            os.rename(image, os.path.join(dstPath,sorted_lps[0][0], filename))
+            dest = os.path.join(dstPath,sorted_lps[0][0], filename)
+            if(os.path.isfile(dest)):
+                os.remove(dest)
+            os.rename(image, dest)
 
 
 if __name__ == '__main__':
