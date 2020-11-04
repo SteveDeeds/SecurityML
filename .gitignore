@@ -16,4 +16,8 @@ data/**
 #########
 *.pyc
 
-background.png
+# video and images #
+####################
+*.mp4
+*.png
+*.jpg
