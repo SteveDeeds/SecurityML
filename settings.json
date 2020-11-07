@@ -1,0 +1,9 @@
+{
+    "VideoSourcePath": ["data","unsorted"],
+    "VideoArchivePath": ["data","archive"],
+    "FrameDestinationPath": ["data","unsorted","frames"],
+    "MachineSortedPath":["data","machine"],
+    "TrainingPath": ["data","train"],
+    "ModelPath": ["data","checkpoints"],
+    "Interactive": false
+}

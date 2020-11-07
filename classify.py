@@ -8,16 +8,19 @@ import cv2
 from PIL import ImageTk, Image
 import tkinter as tk
 import random
+import SMLsettings
 
 window = tk.Tk()
 currentFile = ""
 panel1 = tk.Label()
 panel2 = tk.Label()
 
+settings = SMLsettings.getSettings()
+
 global srcPath 
-srcPath = os.path.join('data','unsorted','frames')
+srcPath = os.path.join(*settings["FrameDestinationPath"])
 global dstPath
-dstPath = os.path.join('data','sorted')
+dstPath = os.path.join(*settings["TrainingPath"])
 
 # def browse_src_button():
 #     global srcPath
@@ -32,6 +35,8 @@ dstPath = os.path.join('data','sorted')
 def displayImage():
     global currentFile
     files = glob.glob(os.path.join(srcPath,'*.png'))
+    files = files + glob.glob(os.path.join(srcPath,'*.jpg'))
+    print("%d more images" % len(files))
     random.shuffle(files)
     currentFile = files[0]
     img1 = ImageTk.PhotoImage(Image.open(currentFile))
@@ -65,6 +70,7 @@ def Initilize():
     # window.geometry("800x1000")
     window.configure(background='grey')
     files = glob.glob(os.path.join(srcPath,'*.png'))
+    files = files + glob.glob(os.path.join(srcPath,'*.jpg'))
     random.shuffle(files)
     currentFile = files[0]
     img1 = ImageTk.PhotoImage(Image.open(currentFile))
@@ -108,15 +114,20 @@ def main():
     os.makedirs(os.path.join(dstPath,'uninteresting'),exist_ok=True)
     Initilize()
     
+def moveToFolder(folder):
+    justName=currentFile.split('\\')[-1]
+    dest = os.path.join(dstPath,folder,justName)
+    if(os.path.isfile(dest)):
+        os.remove(currentFile)        
+    else:
+        os.rename(currentFile,dest)
 
 def interestingCallBack():
-    justName=currentFile.split('\\')[-1]
-    os.rename(currentFile, os.path.join(dstPath,'interesting',justName))
+    moveToFolder("interesting")
     displayImage()
 
 def uninterestingCallBack():
-    justName=currentFile.split('\\')[-1]
-    os.rename(currentFile, os.path.join(dstPath,'uninteresting',justName))
+    moveToFolder("uninteresting")
     displayImage()
 
 

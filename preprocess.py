@@ -14,13 +14,18 @@ import math
 from PIL import ImageTk, Image
 import tkinter as tk
 import functools as ft
+import SMLsettings as s
+
+settings = s.getSettings()
 
 global srcPath 
-srcPath = os.path.join('data','unsorted')
+srcPath = os.path.join(*settings["VideoSourcePath"])
 global archivePath
-archivePath = os.path.join('data','archive')
+archivePath = os.path.join(*settings["VideoArchivePath"])
 global interactive
-interactive = False
+interactive = settings["Interactive"]
+
+
 
 # def preprocess():
 #     files = glob.glob('*.mp4')
@@ -64,28 +69,31 @@ def makeBackground():
     cv2.imwrite("background.png", background)
     return background
 
-def showGUI(image,delta,filename,x,y):
+def showGUI(image3,delta,filename,x,y):
     window = tk.Tk() 
-    image = cv2.rectangle(image,(x-150,y-150),(x+150,y+150),(255,0,0),5)
-    originalwidth=image.shape[1]
-    originalheight=image.shape[0]
+    image2 = image3.copy()
+    image2 = cv2.rectangle(image2,(x-150,y-150),(x+150,y+150),(255,0,0),5)
+    originalwidth=image2.shape[1]
+    originalheight=image2.shape[0]
     scaleFactor=960/originalwidth
     newWidth=int(scaleFactor*originalwidth)
     newHeight=int(scaleFactor*originalheight)
-    imageScaled = cv2.resize(image, dsize=(newWidth,newHeight))
+    imageScaled = cv2.resize(image2, dsize=(newWidth,newHeight))
+    b,g,r = cv2.split(imageScaled)
+    imageScaled = cv2.merge((r,g,b))
     TkImg = Image.fromarray(imageScaled)
     TkImg = ImageTk.PhotoImage(TkImg)
 
     panel = tk.Label(window, image = TkImg)
     panel.grid(row=1,column=0,columnspan=10)
-    window.bind("<Button 1>", lambda e: onClick(e,image,filename,scaleFactor))
+    window.bind("<Button 1>", lambda e: onClick(e,image3,filename,scaleFactor))
 
     window.mainloop()
 
-def onClick(e,image,filename,scaleFactor):
+def onClick(e,image3,filename,scaleFactor):
     x=int(e.x/scaleFactor)
     y=int(e.y/scaleFactor)
-    CropAndSave(x,y,image,filename)
+    CropAndSave(x,y,image3,filename)
     
 
 def maskFrames(background):
@@ -96,27 +104,25 @@ def maskFrames(background):
         cv2.imwrite("delta_raw.jpg", delta)        
         height,width,_ = delta.shape
         #blank out movment of the time stamp
-        delta[height-80:height, 0:width] = 0
-        low_values_flags = delta < 16  # Where values are low
-        delta[low_values_flags] = 0  # All low values set to 0
+        delta[height-100:height, 0:width] = 0
+        #low_values_flags = delta < 16  # Where values are low
+        #delta[low_values_flags] = 0  # All low values set to 0
         delta = imageErode(delta,3)
         delta=cv2.blur(delta, (3,3)).astype(np.uint8)
         cv2.imwrite("delta_blur.jpg", delta)
         print(np.amax(delta))
         if np.amax(delta)<48 : continue
-        x,y,delta = centroid(delta)
-        if(interactive):
-            showGUI(image,delta,filename,x,y)
-        else:
+        tries=0
+        while(np.amax(delta)>48):   
+            x,y,delta = centroid(delta)             
             print(np.amax(delta))
-            tries=0
-            while(np.amax(delta)>48):                
-                print(np.amax(delta))
-                print("x=%d y=%d" % (x, y))
+            print("x=%d y=%d" % (x, y))
+            if(interactive):
+                showGUI(image,delta,filename,x,y)
+            else:
                 CropAndSave(x,y,image,filename)
-                tries = tries + 1
-                if tries > 3: break
-                x,y,delta = centroid(delta)
+            tries = tries + 1
+            if tries > 3: break
 
 
 def CropAndSave(x,y,image,filename):
@@ -141,8 +147,6 @@ def get_random_string(length):
     return result_str
 
 def centroid(delta):
-
-
     y,x,_=np.unravel_index(np.argmax(delta, axis=None), delta.shape)
     height,width,_ = delta.shape
 
@@ -190,7 +194,7 @@ def clearTemp():
         os.remove(f)
 def videoToArchive(filename):
     justName=filename.split('\\')[-1]
-    destName = os.path.join(archivePath, creation_date(filename)+".MP4")
+    destName = os.path.join(archivePath, creation_date(filename)+ get_random_string(4)+".MP4")
     if (not os.path.isfile(destName)): 
         os.rename(filename, destName)
 
