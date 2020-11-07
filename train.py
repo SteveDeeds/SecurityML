@@ -17,11 +17,8 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 import os.path
 
 global trainPath
-trainPath = os.path.join('data','train','train')
+trainPath = os.path.join('data','train')
 os.makedirs(trainPath,exist_ok=True)
-global testPath
-testPath = os.path.join('data','train','test')
-os.makedirs(testPath,exist_ok=True)
 logPath = os.path.join('data', 'logs')
 os.makedirs(logPath,exist_ok=True)
 modelPath = os.path.join('data', 'checkpoints')
@@ -32,7 +29,7 @@ classes = os.listdir(trainPath)
 
 # Helper: Save the model.
 checkpointer = ModelCheckpoint(
-    filepath=os.path.join(modelPath, 'inception.{epoch:03d}-{val_loss:.2f}.hdf5'),
+    filepath=os.path.join(modelPath, "inception.{epoch:03d}-{val_loss:.2f}.hdf5"),
     verbose=1,
     save_best_only=True)
 
@@ -50,7 +47,8 @@ def get_generators():
         horizontal_flip=True,
         rotation_range=10.,
         width_shift_range=0.2,
-        height_shift_range=0.2)
+        height_shift_range=0.2,
+        validation_split=0.2)
 
     test_datagen = ImageDataGenerator(rescale=1./255)
 
@@ -58,17 +56,21 @@ def get_generators():
         trainPath,
         target_size=(299, 299),
         #batch_size=32,
-        batch_size=8,
+        batch_size=20,
         classes=classes,
-        class_mode='categorical')
+        class_mode='categorical'#,
+        #subset='training'
+        )
 
     validation_generator = test_datagen.flow_from_directory(
-        testPath,
+        trainPath,
         target_size=(299, 299),
         #batch_size=32,
-        batch_size=8,
+        batch_size=20,
         classes=classes,
-        class_mode='categorical')
+        class_mode='categorical'#,
+        #subset = 'validation' # validation split finds no images, but if I comment it out, it finds all the training data
+    )
 
     return train_generator, validation_generator
 
@@ -151,7 +153,7 @@ def main(weights_file):
         # Get and train the top layers.
         model = freeze_all_but_top(model)
         #model = train_model(model, 10, generators)
-        model = train_model(model, 1, generators)
+        model = train_model(model, 10, generators)
     else:
         print("Loading saved model: %s." % weights_file)
         model.load_weights(weights_file)
@@ -160,7 +162,7 @@ def main(weights_file):
     model = freeze_all_but_mid_and_top(model)
     #model = train_model(model, 1000, generators,
     #                    [checkpointer, early_stopper, tensorboard])
-    model = train_model(model, 10, generators,[checkpointer, early_stopper, tensorboard])
+    model = train_model(model, 100, generators,[checkpointer, early_stopper, tensorboard])
 
 if __name__ == '__main__':
     weights_file = None
