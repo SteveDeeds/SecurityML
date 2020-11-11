@@ -50,7 +50,7 @@ def get_generators():
         height_shift_range=0.2,
         validation_split=0.2)
 
-    test_datagen = ImageDataGenerator(rescale=1./255)
+    #test_datagen = ImageDataGenerator(rescale=1./255)
 
     train_generator = train_datagen.flow_from_directory(
         trainPath,
@@ -58,18 +58,19 @@ def get_generators():
         #batch_size=32,
         batch_size=20,
         classes=classes,
-        class_mode='categorical'#,
-        #subset='training'
+        class_mode='categorical',
+        subset='training'
         )
 
-    validation_generator = test_datagen.flow_from_directory(
+    #validation_generator = test_datagen.flow_from_directory(
+    validation_generator = train_datagen.flow_from_directory(
         trainPath,
         target_size=(299, 299),
         #batch_size=32,
         batch_size=20,
         classes=classes,
-        class_mode='categorical'#,
-        #subset = 'validation' # validation split finds no images, but if I comment it out, it finds all the training data
+        class_mode='categorical',
+        subset = 'validation' # validation split finds no images, but if I comment it out, it finds all the training data
     )
 
     return train_generator, validation_generator
