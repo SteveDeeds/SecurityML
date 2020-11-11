@@ -61,7 +61,10 @@ def extractFrames(filename):
     call(cmd)
 
 def makeBackground():
+    print("Making the background.  This can take a while.")
     imagefiles = glob.glob(os.path.join(srcPath,'temp','*.jpg'))
+    random.shuffle(imagefiles)
+    imagefiles = imagefiles[:24]
     images = []
     for imagefile in imagefiles:
         images.append(cv2.imread(imagefile))
@@ -69,9 +72,9 @@ def makeBackground():
     cv2.imwrite("background.png", background)
     return background
 
-def showGUI(image3,delta,filename,x,y):
+def showGUI(image,delta,filename,x,y):
     window = tk.Tk() 
-    image2 = image3.copy()
+    image2 = image.copy()
     image2 = cv2.rectangle(image2,(x-150,y-150),(x+150,y+150),(255,0,0),5)
     originalwidth=image2.shape[1]
     originalheight=image2.shape[0]
@@ -86,14 +89,14 @@ def showGUI(image3,delta,filename,x,y):
 
     panel = tk.Label(window, image = TkImg)
     panel.grid(row=1,column=0,columnspan=10)
-    window.bind("<Button 1>", lambda e: onClick(e,image3,filename,scaleFactor))
+    window.bind("<Button 1>", lambda e: onClick(e,image,filename,scaleFactor))
 
     window.mainloop()
 
-def onClick(e,image3,filename,scaleFactor):
+def onClick(e,image,filename,scaleFactor):
     x=int(e.x/scaleFactor)
     y=int(e.y/scaleFactor)
-    CropAndSave(x,y,image3,filename)
+    CropAndSave(x,y,image,filename)
     
 
 def maskFrames(background):
