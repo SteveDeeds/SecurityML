@@ -1,5 +1,5 @@
 """
-Load a modle and use it to sort images by class.
+Load moset recent model and use it to sort images by class.
 """
 import numpy as np
 import operator
@@ -72,8 +72,9 @@ def main(nb_images=5):
             i += 1
         # sort the files into folders by category
         filename = image.split('\\')[-1]
-        if(sorted_lps[0][1]>0.95):
-            dest = os.path.join(dstPath,sorted_lps[0][0], filename)
+        if(sorted_lps[0][1]>0.80):
+            name, extention = filename.split('.')
+            dest = os.path.join(dstPath,sorted_lps[0][0], name + '{:2d}'.format(int(sorted_lps[0][1]*100))+ '.' + extention)
             if(os.path.isfile(dest)):
                 os.remove(dest)
             os.rename(image, dest)
