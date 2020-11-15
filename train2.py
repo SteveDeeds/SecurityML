@@ -58,18 +58,17 @@ def get_generators():
         #batch_size=32,
         batch_size=20,
         classes=classes,
-        class_mode='categorical',
+        class_mode='categorical'#,
         subset='training'
         )
 
-    #validation_generator = test_datagen.flow_from_directory(
-    validation_generator = train_datagen.flow_from_directory(
+    validation_generator = test_datagen.flow_from_directory(
         trainPath,
         target_size=(299, 299),
         #batch_size=32,
         batch_size=20,
         classes=classes,
-        class_mode='categorical',
+        class_mode='categorical'#,
         subset = 'validation' # validation split finds no images, but if I comment it out, it finds all the training data
     )
 
