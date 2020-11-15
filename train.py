@@ -17,19 +17,20 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 import os.path
 
 global trainPath
-trainPath = os.path.join('data','train')
-os.makedirs(trainPath,exist_ok=True)
+trainPath = os.path.join('data', 'train')
+os.makedirs(trainPath, exist_ok=True)
 logPath = os.path.join('data', 'logs')
-os.makedirs(logPath,exist_ok=True)
+os.makedirs(logPath, exist_ok=True)
 modelPath = os.path.join('data', 'checkpoints')
-os.makedirs(modelPath,exist_ok=True)
+os.makedirs(modelPath, exist_ok=True)
 
 global classes
 classes = os.listdir(trainPath)
 
 # Helper: Save the model.
 checkpointer = ModelCheckpoint(
-    filepath=os.path.join(modelPath, "inception.{epoch:03d}-{val_loss:.2f}.hdf5"),
+    filepath=os.path.join(
+        modelPath, "inception.{epoch:03d}-{val_loss:.2f}.hdf5"),
     verbose=1,
     save_best_only=True)
 
@@ -39,6 +40,7 @@ early_stopper = EarlyStopping(patience=10)
 # Helper: TensorBoard
 
 tensorboard = TensorBoard(log_dir=logPath)
+
 
 def get_generators():
     train_datagen = ImageDataGenerator(
@@ -55,25 +57,27 @@ def get_generators():
     train_generator = train_datagen.flow_from_directory(
         trainPath,
         target_size=(299, 299),
-        #batch_size=32,
+        # batch_size=32,
         batch_size=20,
         classes=classes,
         class_mode='categorical',
         subset='training'
-        )
+    )
 
-    #validation_generator = test_datagen.flow_from_directory(
+    # validation_generator = test_datagen.flow_from_directory(
     validation_generator = train_datagen.flow_from_directory(
         trainPath,
         target_size=(299, 299),
-        #batch_size=32,
+        # batch_size=32,
         batch_size=20,
         classes=classes,
         class_mode='categorical',
-        subset = 'validation' # validation split finds no images, but if I comment it out, it finds all the training data
+        # validation split finds no images, but if I comment it out, it finds all the training data
+        subset='validation'
     )
 
     return train_generator, validation_generator
+
 
 def get_model(weights='imagenet'):
     # add an input layer
@@ -84,7 +88,7 @@ def get_model(weights='imagenet'):
     x = base_model(x)
     # add a global spatial average pooling layer
     x = base_model.output
-    
+
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu')(x)
@@ -97,6 +101,7 @@ def get_model(weights='imagenet'):
     model = Model(inputs=base_model.input, outputs=predictions)
     return model
 
+
 def freeze_all_but_top(model):
     """Used to train just the top layers of the model."""
     # first: train only the top layers (which were randomly initialized)
@@ -105,9 +110,11 @@ def freeze_all_but_top(model):
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
-    model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='rmsprop',
+                  loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
+
 
 def freeze_all_but_mid_and_top(model):
     """After we fine-tune the dense layers, train deeper."""
@@ -127,6 +134,7 @@ def freeze_all_but_mid_and_top(model):
 
     return model
 
+
 def train_model(model, nb_epoch, generators, callbacks=[]):
     train_generator, validation_generator = generators
     # model.fit_generator(
@@ -145,6 +153,7 @@ def train_model(model, nb_epoch, generators, callbacks=[]):
         callbacks=callbacks)
     return model
 
+
 def main(weights_file):
     model = get_model()
     generators = get_generators()
@@ -161,9 +170,11 @@ def main(weights_file):
 
     # Get and train the mid layers.
     model = freeze_all_but_mid_and_top(model)
-    #model = train_model(model, 1000, generators,
+    # model = train_model(model, 1000, generators,
     #                    [checkpointer, early_stopper, tensorboard])
-    model = train_model(model, 100, generators,[checkpointer, early_stopper, tensorboard])
+    model = train_model(model, 100, generators, [
+                        checkpointer, early_stopper, tensorboard])
+
 
 if __name__ == '__main__':
     weights_file = None
