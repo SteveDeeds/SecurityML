@@ -46,11 +46,11 @@ def creation_date(path_to_file):
     else:
         stat = os.stat(path_to_file)
         try:
-            timeNumber = stat.st_birthtime
+            timeNumber = time.gmtime(stat.st_birthtime)
         except AttributeError:
             # We're probably on Linux. No easy way to get creation dates here,
             # so we'll settle for when its content was last modified.
-            timeNumber = stat.st_mtime
+            timeNumber = time.gmtime(stat.st_mtime)
     return time.strftime("%y%m%d_%H%m%S", timeNumber)
 
 
