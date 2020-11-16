@@ -62,7 +62,7 @@ def extractFrames(filename):
     dest = os.path.join(srcPath, 'temp', filename_no_ext + '-%04d.jpg')
     #cmd = ["ffmpeg", "-i", src, "-r", "1", dest]
     #cmd = ["ffmpeg", "-i", src, dest]
-    if filename.find("timelapse"):
+    if filename.find("timelapse")>=0:
         cmd = 'ffmpeg -i %s -vf "scale=1920:1080" %s' % (src, dest)
     else:
         cmd = 'ffmpeg -i %s -vf "scale=1920:1080,fps=fps=1" %s' % (src, dest)
@@ -117,40 +117,59 @@ def maskFrames(background):
     for filename in files:
         image = cv2.imread(filename)
         delta = abs(image - background)
-        cv2.imwrite("delta_raw.jpg", delta)
-        height, width, _ = delta.shape
+        delta = np.amax(delta,2)
+        #cv2.imwrite("delta_raw.jpg", delta)
+        height, width = delta.shape
         # blank out movment of the time stamp
         delta[height-100:height, 0:width] = 0
         # low_values_flags = delta < 16  # Where values are low
         # delta[low_values_flags] = 0  # All low values set to 0
         delta = imageErode(delta, 3)
-        delta = cv2.blur(delta, (3, 3)).astype(np.uint8)
-        cv2.imwrite("delta_blur.jpg", delta)
-        print(np.amax(delta))
-        if np.amax(delta) < 48:
+        delta_blur = cv2.blur(delta, (3, 3)).astype(np.uint8)
+        #cv2.imwrite("delta_blur.jpg", delta)
+        print(np.amax(delta_blur))
+        #if np.amax(delta_blur) < 48:
+        if np.amax(delta_blur) < 64:
             continue
         tries = 0
-        while(np.amax(delta) > 48):
-            x, y, delta = centroid(delta)
-            print(np.amax(delta))
+        #while(np.amax(delta_blur) > 48):
+        while(np.amax(delta_blur) > 64):
+            x, y, delta_blur = centroid(delta_blur)
+            print(np.amax(delta_blur))
             print("x=%d y=%d" % (x, y))
             if(interactive):
                 showGUI(image, delta, filename, x, y)
             else:
-                CropAndSave(x, y, image, filename)
+                CropAndSave(x, y, image, filename, delta)
             tries = tries + 1
             if tries > 3:
                 break
 
 
-def CropAndSave(x, y, image, filename):
+def CropAndSave(x, y, image, filename, delta = None):
+    #print(np.amin(delta))
+    #print(np.amax(delta))
+    delta = (delta /2 +127).astype(np.uint8)
+    #print(np.amin(delta))
+    #print(np.amax(delta))
+    r,g,b = cv2.split(image)
+    image = cv2.merge((r,g,b,delta))
+    #r,g,b,a = cv2.split(image)
+    #print(np.amin(a))
+    #print(np.amax(a))   
     height, width, _ = image.shape
     x = max(150, min(width-150, x))
     y = max(150, min(height-150, y))
     image_cropped = image[y-149:y+150, x-149:x+150]
+    #r,g,b,a = cv2.split(image_cropped)
+    #print(np.amin(a))
+    #print(np.amax(a))  
     filename_no_ext = filename.split('.')[0]
     newFileName = filename_no_ext.replace(
         "temp", "frames") + get_random_string(4) + ".jpg"
+    cv2.imwrite(newFileName, image_cropped)
+    newFileName = filename_no_ext.replace(
+        "temp", "png") + get_random_string(4) + ".png"
     cv2.imwrite(newFileName, image_cropped)
     # #sometimes a head is chopped off, so crop above the target as well.
     # y=y-150
@@ -168,8 +187,8 @@ def get_random_string(length):
 
 
 def centroid(delta):
-    y, x, _ = np.unravel_index(np.argmax(delta, axis=None), delta.shape)
-    height, width, _ = delta.shape
+    y, x = np.unravel_index(np.argmax(delta, axis=None), delta.shape)
+    height, width = delta.shape
 
     # mask2d=np.amax(delta, 2).astype(np.int32)
     # histx = cv2.reduce(mask2d, 0, cv2.REDUCE_SUM, dtype =cv2.CV_32S)
@@ -220,11 +239,13 @@ def clearTemp():
 
 
 def videoToArchive(filename):
-    justName = filename.split('\\')[-1]
+    justName = os.path.split(filename)[1]
     destName = os.path.join(archivePath, creation_date(
         filename) + get_random_string(4)+".MP4")
     if (not os.path.isfile(destName)):
         os.rename(filename, destName)
+    else:
+        os.remove(filename)
 
 
 def main():
