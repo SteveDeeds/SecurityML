@@ -1,9 +1,37 @@
 {
-    "VideoSourcePath": ["data","unsorted"],
-    "VideoArchivePath": ["data","archive"],
-    "FrameDestinationPath": ["data","unsorted","frames"],
-    "MachineSortedPath":["data","machine"],
-    "TrainingPath": ["data","train"],
-    "ModelPath": ["data","checkpoints"],
-    "Interactive": false
+  "VideoSourcePath": [
+    "data",
+    "unsorted"
+  ],
+  "VideoArchivePath": [
+    "data",
+    "archive"
+  ],
+  "FrameDestinationPath": [
+    "data",
+    "unsorted",
+    "frames"
+  ],
+  "MachineSortedPath": [
+    "data",
+    "machine"
+  ],
+  "TrainingPath": [
+    "data",
+    "train"
+  ],
+  "EmbeddingTrainingPath": [
+    "data",
+    "unsorted",
+    "raw_frames"
+  ],
+  "ModelPath": [
+    "data",
+    "checkpoints"
+  ],
+  "EmbeddingModelPath": [
+    "data",
+    "embedding"
+  ],
+  "Interactive": false
 }
