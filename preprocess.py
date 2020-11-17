@@ -221,12 +221,12 @@ def videoToArchive(filename):
 
 
 def main():
-
     os.makedirs(os.path.join(srcPath, 'frames'), exist_ok=True)
     os.makedirs(os.path.join(srcPath, 'temp'), exist_ok=True)
     os.makedirs(archivePath, exist_ok=True)
     clearTemp()
     files = glob.glob(os.path.join(srcPath, '*.mp4'))
+    files = files + glob.glob(os.path.join(srcPath, '*.MP4'))
     files = files + glob.glob(os.path.join(srcPath, '**', '*.mp4'))
     files = files + glob.glob(os.path.join(srcPath, '**', '**', '*.mp4'))
     random.shuffle(files)
