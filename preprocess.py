@@ -117,7 +117,7 @@ def maskFrames(background):
     for filename in files:
         image = cv2.imread(filename)
         delta = abs(image - background)
-        delta = np.amax(delta,2)
+        delta = (np.sum(delta,2)/3)
         #cv2.imwrite("delta_raw.jpg", delta)
         height, width = delta.shape
         # blank out movment of the time stamp
