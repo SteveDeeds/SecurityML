@@ -40,19 +40,16 @@ def creation_date(path_to_file):
     last modified if that isn't possible.
     See http://stackoverflow.com/a/39501288/1709587 for explanation.
     """
-    plat = platform.system()
-    windate = time.localtime(os.path.getctime(path_to_file))
-    stat = os.stat(path_to_file)
     if platform.system() == 'Windows':
         timeNumber = time.localtime(os.path.getctime(path_to_file))
     else:
         stat = os.stat(path_to_file)
         try:
-            timeNumber = stat.st_birthtime
+            timeNumber = time.gmtime(stat.st_birthtime)
         except AttributeError:
             # We're probably on Linux. No easy way to get creation dates here,
             # so we'll settle for when its content was last modified.
-            timeNumber = stat.st_mtime
+            timeNumber = time.gmtime(stat.st_mtime)
     return time.strftime("%y%m%d_%H%M%S", timeNumber)
 
 
@@ -254,6 +251,7 @@ def main():
     os.makedirs(archivePath, exist_ok=True)
     clearTemp()
     files = glob.glob(os.path.join(srcPath, '*.mp4'))
+    files = files + glob.glob(os.path.join(srcPath, '*.MP4'))
     files = files + glob.glob(os.path.join(srcPath, '**', '*.mp4'))
     files = files + glob.glob(os.path.join(srcPath, '**', '**', '*.mp4'))
     random.shuffle(files)
