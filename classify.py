@@ -19,8 +19,13 @@ settings = SMLsettings.getSettings()
 
 global srcPath
 srcPath = os.path.join(*settings["FrameDestinationPath"])
+srcPath = 'F:\\SecurityML\\data\\machine\\unsure'
 global dstPath
 dstPath = os.path.join(*settings["TrainingPath"])
+trainPath = os.path.join(*settings["TrainingPath"])
+global classes
+classes = os.listdir(trainPath)
+global files
 
 # def browse_src_button():
 #     global srcPath
@@ -34,11 +39,11 @@ dstPath = os.path.join(*settings["TrainingPath"])
 
 def displayImage():
     global currentFile
-    files = glob.glob(os.path.join(srcPath, '*.png'))
-    files = files + glob.glob(os.path.join(srcPath, '*.jpg'))
-    print("%d more images" % len(files))
+    global files
+    currentFile = files.pop()
+    #print(os.path.split(currentFile)[1])
     random.shuffle(files)
-    currentFile = files[0]
+    currentFile = files.pop()
     img1 = ImageTk.PhotoImage(Image.open(currentFile))
     #img1 = cv2.imread(currentFile, cv2.IMREAD_UNCHANGED)
     #r,g,b,a = cv2.split(img1)
@@ -66,13 +71,14 @@ def Initilize():
     global currentFile
     global panel1
     global panel2
+    global files
     window.title("Calssify the image")
     # window.geometry("800x1000")
     window.configure(background='grey')
     files = glob.glob(os.path.join(srcPath, '*.png'))
     files = files + glob.glob(os.path.join(srcPath, '*.jpg'))
     random.shuffle(files)
-    currentFile = files[0]
+    currentFile = files.pop()
     img1 = ImageTk.PhotoImage(Image.open(currentFile))
     #img1 = cv2.imread(currentFile, cv2.IMREAD_UNCHANGED)
     #r,g,b,a = cv2.split(img1)
@@ -92,10 +98,11 @@ def Initilize():
     #img2 = ImageTk.PhotoImage(Image.open(currentFile.replace('masked','frames')))
     panel1 = tk.Label(window, image=img1)
     #panel2 = tk.Label(window, image = img2)
-    bInteresting = tk.Button(window, text="Interesting",
-                             command=interestingCallBack)
-    bUninteresting = tk.Button(
-        window, text="Uninteresting", command=uninterestingCallBack)
+    i=0
+    for c in classes:
+        button = tk.Button(window, text=c, command= lambda: buttonClick(c))
+        button.grid(row=3, column=i)
+        i=i+1
 
     #srcPathLabel = tk.Label(master=window,textvariable=srcPath)
     #srcButton = tk.Button(text="Browse", command=browse_src_button)
@@ -105,36 +112,29 @@ def Initilize():
     # srcPathLabel.grid(row=0,column=1)
     panel1.grid(row=1, column=0, columnspan=10)
     # panel2.grid(row=2,column=0,columnspan=10)
-    bInteresting.grid(row=3, column=0)
-    bUninteresting.grid(row=3, column=1)
 
     window.mainloop()
 
 
 def main():
-    os.makedirs(os.path.join(dstPath, 'interesting'), exist_ok=True)
-    os.makedirs(os.path.join(dstPath, 'uninteresting'), exist_ok=True)
+    for c in classes:
+        os.makedirs(os.path.join(dstPath, c), exist_ok=True)
     Initilize()
 
 
 def moveToFolder(folder):
-    justName = currentFile.split('\\')[-1]
+    justName = os.path.split(currentFile)[1]
     dest = os.path.join(dstPath, folder, justName)
     if(os.path.isfile(dest)):
         os.remove(currentFile)
     else:
         os.rename(currentFile, dest)
+    print("moved " + justName + " to " + dest)
 
 
-def interestingCallBack():
-    moveToFolder("interesting")
+def buttonClick(c):
+    moveToFolder(c)
     displayImage()
-
-
-def uninterestingCallBack():
-    moveToFolder("uninteresting")
-    displayImage()
-
 
 if __name__ == '__main__':
     main()
