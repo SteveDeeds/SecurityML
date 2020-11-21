@@ -34,7 +34,8 @@ def main(nb_images=5):
     # Get all our test images.
     images = glob.glob(os.path.join(srcPath, '*.jpg'))
     images = images + glob.glob(os.path.join(srcPath, '**', '*.jpg'))
-    random.shuffle(images)
+    #random.shuffle(images)
+    images.sort(reverse=True)
     print("found %d images." % len(images))
 
     # Load the most recent model
