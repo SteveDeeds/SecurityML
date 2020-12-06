@@ -19,7 +19,7 @@ settings = SMLsettings.getSettings()
 
 global srcPath
 srcPath = os.path.join(*settings["FrameDestinationPath"])
-srcPath = 'F:\\SecurityML\\data\\machine\\unsure'
+#srcPath = 'F:\\SecurityML\\data\\machine\\person'
 global dstPath
 dstPath = os.path.join(*settings["TrainingPath"])
 trainPath = os.path.join(*settings["TrainingPath"])
@@ -44,26 +44,14 @@ def displayImage():
     #print(os.path.split(currentFile)[1])
     random.shuffle(files)
     currentFile = files.pop()
-    img1 = ImageTk.PhotoImage(Image.open(currentFile))
-    #img1 = cv2.imread(currentFile, cv2.IMREAD_UNCHANGED)
-    #r,g,b,a = cv2.split(img1)
-    #a = ((a>32)*255).astype(np.uint8)
-    #a = a.astype(np.uint8)
-    #a = (a * 4 + 32).astype(np.int32)
-    #maximum = np.full(a.shape, 255).astype(np.int32)
-    # cv2.merge((a,maximum))
-    #a = np.amin(a)
-    #a = a.astype(np.uint8)
-    #img1 = cv2.merge((b,g,r,a))
-    #img1 = Image.fromarray(img1)
-    #img1 = ImageTk.PhotoImage(img1)
-    #img2 = cv2.merge((b,g,r))
-    #img2 = Image.fromarray(img2)
-    #img2 = ImageTk.PhotoImage(img2)
+    img1 = Image.open(currentFile)
+    w,h = img1.size
+    ratio = w/h
+    img1 = img1.resize((int(400*ratio),400), Image.ANTIALIAS)
+    img1 = ImageTk.PhotoImage(img1)
     panel1.configure(image=img1)
     panel1.image = img1
-    #panel2.configure(image = img2)
-    #panel2.image = img2
+    return img1
 
 
 def Initilize():
@@ -77,9 +65,11 @@ def Initilize():
     window.configure(background='grey')
     files = glob.glob(os.path.join(srcPath, '*.png'))
     files = files + glob.glob(os.path.join(srcPath, '*.jpg'))
+    #files = files + glob.glob(os.path.join(srcPath, '**','*.jpg'))
     random.shuffle(files)
-    currentFile = files.pop()
-    img1 = ImageTk.PhotoImage(Image.open(currentFile))
+    img1 = displayImage()
+    #currentFile = files.pop()
+    #img1 = ImageTk.PhotoImage(Image.open(currentFile))
     #img1 = cv2.imread(currentFile, cv2.IMREAD_UNCHANGED)
     #r,g,b,a = cv2.split(img1)
     #a = ((a>32)*255).astype(np.uint8)
